@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const products = require('../Models/Products');
+const User = require('../Models/user')
+const verifyToken = require('../middleware/authreq')
 
-//Inserting(Creating) Data:
-router.post("/insertproduct", async (req, res) => {
+
+router.post("/insertproduct", verifyToken, async (req, res) => {
     const { ProductName, ProductPrice, ProductBarcode } = req.body;
+    const userId = req.user.user.id;
+
 
     try {
         const pre = await products.findOne({ ProductBarcode: ProductBarcode })
@@ -14,7 +18,7 @@ router.post("/insertproduct", async (req, res) => {
             res.status(422).json("Product is already added.")
         }
         else {
-            const addProduct = new products({ ProductName, ProductPrice, ProductBarcode })
+            const addProduct = new products({userId, ProductName, ProductPrice, ProductBarcode })
 
             await addProduct.save();
             res.status(201).json(addProduct)
@@ -26,11 +30,11 @@ router.post("/insertproduct", async (req, res) => {
     }
 })
 
-//Getting(Reading) Data:
-router.get('/products', async (req, res) => {
 
+router.get('/products',verifyToken, async (req, res) => {
+    const userId = req.user.user.id;
     try {
-        const getProducts = await products.find({})
+        const getProducts = await products.find({userId})
         console.log(getProducts);
         res.status(201).json(getProducts);
     }
@@ -40,7 +44,7 @@ router.get('/products', async (req, res) => {
 })
 
 //Getting(Reading) individual Data:
-router.get('/products/:id', async (req, res) => {
+router.get('/products/:id', verifyToken, async (req, res) => {
 
     try {
         const getProduct = await products.findById(req.params.id);
@@ -53,7 +57,7 @@ router.get('/products/:id', async (req, res) => {
 })
 
 //Editing(Updating) Data:
-router.put('/updateproduct/:id', async (req, res) => {
+router.put('/updateproduct/:id', verifyToken, async (req, res) => {
     const { ProductName, ProductPrice, ProductBarcode } = req.body;
 
     try {
@@ -67,7 +71,7 @@ router.put('/updateproduct/:id', async (req, res) => {
 })
 
 //Deleting Data:
-router.delete('/deleteproduct/:id', async (req, res) => {
+router.delete('/deleteproduct/:id',verifyToken,  async (req, res) => {
 
     try {
         const deleteProduct = await products.findByIdAndDelete(req.params.id);
